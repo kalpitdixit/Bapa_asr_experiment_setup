@@ -5,6 +5,18 @@ import argparse
 
 
 
+def get_new_exp_num(dname):
+    fname = os.path.join(dname, "exp_num.txt")
+    if not os.path.exists(fname):
+        new_exp_num = 1
+    else:
+        with open(fname, "r") as f:
+            new_exp_num = 1 + int(f.readline().strip())
+    with open(fname, "w") as fw:
+        fw.write(str(new_exp_num)+"\n")
+    return new_exp_num
+
+    
 def empty_dir(dname):
     if DATA_DIR in dname:
         raise ValueError("trying to delete a data folder")
@@ -80,7 +92,14 @@ if __name__=="__main__":
     test_transcript_dirs = [os.path.join(DATA_DIR, "segmented-transcripts/Day 2 - Pravachan 2 - 27th August 2019")]
 
     ##### RUN #####
-    DEST_DIR = os.path.join(ESPNET_DIR, "egs/Bapa/asr1")
+    new_exp_num = get_new_exp_num(os.path.join(ESPNET_DIR, "egs/Bapa")) # /home/ubuntu/code/espnet/egs/Bapa
+
+    TEMPLATE_EXP_DIR = os.path.join(ESPNET_DIR, "egs/Bapa/template_exp")
+    DEST_DIR = os.path.join(ESPNET_DIR, "egs/Bapa/asr_exp_{}".format(new_exp_num))
+    #DEST_DIR = os.path.join(ESPNET_DIR, "egs/Bapa/asr1")
+    print("Destination Directory : {}".format(DEST_DIR))
+
+    os.system("cp -r {} {}".format(TEMPLATE_EXP_DIR, DEST_DIR))
     empty_dir(os.path.join(DEST_DIR, "downloads"))
     empty_dir(os.path.join(DEST_DIR, "data"))
     os.system("rm -rf {}".format(os.path.join(DEST_DIR, "data", "train", "wav.scp")))
