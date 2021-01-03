@@ -94,7 +94,8 @@ if __name__=="__main__":
     ##### RUN #####
     new_exp_num = get_new_exp_num(os.path.join(ESPNET_DIR, "egs/Bapa")) # /home/ubuntu/code/espnet/egs/Bapa
 
-    TEMPLATE_EXP_DIR = os.path.join(ESPNET_DIR, "egs/Bapa/template_exp")
+    TEMPLATE_EXP_DIR = "template_exp"
+    #TEMPLATE_EXP_DIR = os.path.join(ESPNET_DIR, "egs/Bapa/template_exp")
     DEST_DIR = os.path.join(ESPNET_DIR, "egs/Bapa/asr_exp_{}".format(new_exp_num))
     #DEST_DIR = os.path.join(ESPNET_DIR, "egs/Bapa/asr1")
     print("Destination Directory : {}".format(DEST_DIR))
