@@ -91,6 +91,16 @@ def read_mapping_file(data_dir):
     return out_map
 
 
+def remove_first_dir(path):
+    path_parts = [os.path.basename(path)]
+    path = os.path.dirname(path)
+    while path not in ["", "."]:
+        path_parts.append(os.path.basename(path))
+        path = os.path.dirname(path)
+    path_parts = path_parts[::-1]
+    return os.path.join(*path_parts[1:])
+        
+        
 
 if __name__=="__main__":
     ##### ARGUMENTS #####
@@ -100,6 +110,7 @@ if __name__=="__main__":
     #inp_dname = "Day 2 - Pravachan 2 - 27th August 2019"
     #inp_dname = "Day 1 - Pravachan 1 - 26th August 2019"
 
+    """
     inp_dnames = ["Day 1 - Pravachan 1 - 26th August 2019",
                   "Day 2 - Pravachan 2 - 27th August 2019",
                   "Day 3 - Pravachan 3 - 28th August 2019",
@@ -107,42 +118,34 @@ if __name__=="__main__":
                   "Day 6 - Pravachan 5 - 31st August 2019",
                   "Day 7 - Pravachan 6 - 1st September 2019",
                   "Day 8 - Pravachan 7 - 2nd September 2019"]
-    data_dir = "../../../data/paryushan-2019"
-    
+    """
+
+    #data_dir = "../../../data/paryushan-2019"
+    data_dir = "../../../data/2019-shri-yogvasishtha-maharamayan"
     audios_sph_to_transcript_map = read_mapping_file(data_dir)
 
-    for inp_dname in inp_dnames:
-        inp_sph_dname        = os.path.join(data_dir, "audios-sph/{}".format(inp_dname))
-        inp_transcript_dname = os.path.join(data_dir, "transcripts/{}".format(inp_dname))
-        
-        out_sph_dname        = os.path.join(data_dir, "segmented-audio-sph/{}".format(inp_dname))
-        out_transcript_dname = os.path.join(data_dir, "segmented-transcripts/{}".format(inp_dname))
+    out_sph_dname        = os.path.join(data_dir, "segmented-audio-sph")
+    out_transcript_dname = os.path.join(data_dir, "segmented-transcripts")
 
-        ##### SETUP #####
-        for dname in [out_sph_dname, out_transcript_dname]:
-            empty_dir(dname)
+    for dname in [out_sph_dname, out_transcript_dname]:
+        empty_dir(dname)
+        if not os.path.exists(dname):
+            os.makedirs(dname)
+
+    for inp_sph_fname,inp_transcript_fname in audios_sph_to_transcript_map.items():
+        if inp_transcript_fname[-3:]=="doc":
+            print("ignoring .doc transcript")
+            continue
+        this_out_sph_dname        = os.path.join(out_sph_dname, remove_first_dir(os.path.dirname(inp_sph_fname)))
+        this_out_transcript_dname = os.path.join(out_transcript_dname, remove_first_dir(os.path.dirname(inp_transcript_fname)))
+        for dname in [this_out_sph_dname, this_out_transcript_dname]:
             if not os.path.exists(dname):
                 os.makedirs(dname)
 
-        ##### RUN #####
-        inp_sph_fnames        = glob.glob(os.path.join(inp_sph_dname, "*"))
-        inp_transcript_fnames = glob.glob(os.path.join(inp_transcript_dname, "*docx"))
-        inp_transcript_fnames = dict([(os.path.join(os.path.basename(os.path.dirname(os.path.dirname(x))),
-                                                                                     os.path.basename(os.path.dirname(x)),
-                                                                                     os.path.basename(x)), x)
-                                      for x in inp_transcript_fnames])
-        for inp_sph_fname in inp_sph_fnames:
-            key = os.path.join(os.path.basename(os.path.dirname(os.path.dirname(inp_sph_fname))),
-                                                                os.path.basename(os.path.dirname(inp_sph_fname)),
-                                                                os.path.basename(inp_sph_fname))
-            if not key in audios_sph_to_transcript_map:
-                print("no transcript file for: {}".format(key))
-                continue
-            inp_transcript_fname = audios_sph_to_transcript_map[key]
-            inp_transcript_fname = inp_transcript_fnames[inp_transcript_fname]
-
-            transcript_segments = get_transcript_segments(inp_transcript_fname) # list. each elem is (start_time, end_time, text). times are in seconds.
-            write_segmented_sphs(inp_sph_fname, transcript_segments, out_sph_dname)
-            write_segmented_transcripts(transcript_segments, out_transcript_dname)
-        
+        inp_sph_fname        = os.path.join(data_dir, inp_sph_fname)
+        inp_transcript_fname = os.path.join(data_dir, inp_transcript_fname)
+            
+        transcript_segments = get_transcript_segments(inp_transcript_fname) # list. each elem is (start_time, end_time, text). times are in seconds.
+        write_segmented_sphs(inp_sph_fname, transcript_segments, this_out_sph_dname)
+        write_segmented_transcripts(transcript_segments, this_out_transcript_dname)
 
