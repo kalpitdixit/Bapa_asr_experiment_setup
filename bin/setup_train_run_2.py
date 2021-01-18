@@ -63,22 +63,43 @@ if __name__=="__main__":
     #if config.tiny_train:
     #    raise NotImplementedError("not correctly implemented")
 
-    DATA_DIR = os.path.join(DATA_DIR, "paryushan-2019")
+    ##### DATASETS #####
+    train_audio_dirs = []
+    train_transcript_dirs = []
+
+    test_audio_dirs = []
+    test_transcript_dirs = []
+
+    ### TRAIN 1 ###
+    DATA_DIR_this = os.path.join(DATA_DIR, "paryushan-2019")
     train_dirs = ["Day 1 - Pravachan 1 - 26th August 2019",
-                  #"Day 2 - Pravachan 2 - 27th August 2019", # marked as text
+                  #"Day 2 - Pravachan 2 - 27th August 2019", # marked as test
                   "Day 3 - Pravachan 3 - 28th August 2019",
                   "Day 4 - Pravachan 4 - 29th August 2019",
                   "Day 6 - Pravachan 5 - 31st August 2019",
                   "Day 7 - Pravachan 6 - 1st September 2019"]
-    train_audio_dirs = []
-    train_transcript_dirs = []
     for tdir in train_dirs:
-        train_audio_dirs.append(os.path.join(DATA_DIR, "segmented-audio-sph/{}".format(tdir)))
-        train_transcript_dirs.append(os.path.join(DATA_DIR, "segmented-transcripts/{}".format(tdir)))
+        train_audio_dirs.append(os.path.join(DATA_DIR_this, "segmented-audio-sph/{}".format(tdir)))
+        train_transcript_dirs.append(os.path.join(DATA_DIR_this, "segmented-transcripts/{}".format(tdir)))
 
-    test_audio_dirs      = [os.path.join(DATA_DIR, "segmented-audio-sph/Day 2 - Pravachan 2 - 27th August 2019")]
-    test_transcript_dirs = [os.path.join(DATA_DIR, "segmented-transcripts/Day 2 - Pravachan 2 - 27th August 2019")]
+    ### TEST 1 ###
+    test_audio_dirs.append(os.path.join(DATA_DIR_this, "segmented-audio-sph/Day 2 - Pravachan 2 - 27th August 2019"))
+    test_transcript_dirs.append(os.path.join(DATA_DIR_this, "segmented-transcripts/Day 2 - Pravachan 2 - 27th August 2019"))
 
+    ### TRAIN 2 ###
+    DATA_DIR_this = os.path.join(DATA_DIR, "2019-shri-yogvasishtha-maharamayan")
+    train_dirs = ["Shibir 7 Paryushan Mahaparva/Pravachan 1",
+                  #"Shibir 7 Paryushan Mahaparva/Pravachan 2", # marked as test
+                  "Shibir 7 Paryushan Mahaparva/Pravachan 3",
+                  "Shibir 7 Paryushan Mahaparva/Pravachan 4",
+                  "Shibir 7 Paryushan Mahaparva/Pravachan 5",
+                  "Shibir 7 Paryushan Mahaparva/Pravachan 6"]
+    for tdir in train_dirs:
+        tdir_with_Sewak = os.path.join(os.path.dirname(tdir)+" Sewak", os.path.basename(tdir))
+        train_audio_dirs.append(os.path.join(DATA_DIR_this, "segmented-audio-sph/{}".format(tdir)))
+        train_transcript_dirs.append(os.path.join(DATA_DIR_this, "segmented-transcripts/Part by part/{}".format(tdir_with_Sewak)))
+    print(train_transcript_dirs)
+    
     ##### RUN #####
     DEST_DIR = os.path.join(ESPNET_DIR, "egs/Bapa/asr1")
     empty_dir(os.path.join(DEST_DIR, "downloads"))
@@ -90,6 +111,7 @@ if __name__=="__main__":
     for dname in train_audio_dirs:
         copy_from_dir_to_dir(dname, os.path.join(DEST_DIR, "downloads", "Bapa", "wav", "an4_clstk", "speaker1"), config, 
                              file_list_fname=os.path.join(DEST_DIR, "data", "train", "wav.scp"))
+        print(dname)
 
     allowed_ids = None
     if config.tiny_train:
@@ -100,6 +122,8 @@ if __name__=="__main__":
     for dname in train_transcript_dirs:
         copy_from_dir_to_file(dname, os.path.join(DEST_DIR, "data", "train", "text"), allowed_ids, create_text_file=True)
         copy_from_dir_to_file(dname, os.path.join(DEST_DIR, "downloads", "Bapa", "etc", "train.transcription"), allowed_ids)
+        print(dname)
+        print(os.path.join(DEST_DIR, "data", "train", "text"))
 
 
     ### TEST
