@@ -82,13 +82,9 @@ def write_segmented_transcripts(transcript_segments, out_transcript_dname):
             fw.write(out_str+"\n")
 
 
-def read_mapping_file(data_dir):
-    out_map = {}
-    with open(os.path.join(data_dir, "audios_sph_transcripts_map.json"), "r") as f:
-        for line in f:
-            x = json.loads(line)
-            out_map[x["audio_sph_file"]] = x["transcript_file"]
-    return out_map
+def read_jsonl_file(fname):
+    with open(fname, "r") as f:
+        return [json.loads(line) for line in f]
 
 
 def remove_first_dir(path):
@@ -118,19 +114,33 @@ if __name__=="__main__":
                   "Day 6 - Pravachan 5 - 31st August 2019",
                   "Day 7 - Pravachan 6 - 1st September 2019",
                   "Day 8 - Pravachan 7 - 2nd September 2019"]
+<<<<<<< HEAD
     """
 
     #data_dir = "../../../data/paryushan-2019"
     data_dir = "../../../data/2019-shri-yogvasishtha-maharamayan"
     audios_sph_to_transcript_map = read_mapping_file(data_dir)
+=======
+    data_dir = "../../../data/paryushan-2019"
+    """
+    #inp_dnames = [""]
+    data_dir = "../../../data/2019-shri-yogvasishtha-maharamayan"
+    
+    audios_sph_to_transcript_map = read_jsonl_file(os.path.join(data_dir, "audios_sph_transcripts_map.json"))
+>>>>>>> ddbc529ab281207219fa7d29347afa192a40974d
 
     out_sph_dname        = os.path.join(data_dir, "segmented-audio-sph")
     out_transcript_dname = os.path.join(data_dir, "segmented-transcripts")
 
+<<<<<<< HEAD
+=======
+    ##### SETUP #####
+>>>>>>> ddbc529ab281207219fa7d29347afa192a40974d
     for dname in [out_sph_dname, out_transcript_dname]:
         empty_dir(dname)
         if not os.path.exists(dname):
             os.makedirs(dname)
+<<<<<<< HEAD
 
     for inp_sph_fname,inp_transcript_fname in audios_sph_to_transcript_map.items():
         if inp_transcript_fname[-3:]=="doc":
@@ -148,4 +158,16 @@ if __name__=="__main__":
         transcript_segments = get_transcript_segments(inp_transcript_fname) # list. each elem is (start_time, end_time, text). times are in seconds.
         write_segmented_sphs(inp_sph_fname, transcript_segments, this_out_sph_dname)
         write_segmented_transcripts(transcript_segments, this_out_transcript_dname)
+=======
 
+    for entry in audios_sph_to_transcript_map:
+        inp_sph_fname        = os.path.join(data_dir, entry["audio_sph_file"])
+        inp_transcript_fname = os.path.join(data_dir, entry["transcript_file"])
+        filter_criteria      = entry["filter_criteria"]
+>>>>>>> ddbc529ab281207219fa7d29347afa192a40974d
+
+        ##### RUN #####
+        transcript_segments = get_transcript_segments(inp_transcript_fname) # list. each elem is (start_time, end_time, text). times are in seconds.
+        write_segmented_sphs(inp_sph_fname, transcript_segments, out_sph_dname)
+        write_segmented_transcripts(transcript_segments, out_transcript_dname)
+    
