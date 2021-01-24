@@ -66,12 +66,12 @@ if [ ${stage} -le 0 ] && [ ${stop_stage} -ge 0 ]; then
     echo "stage 0: Data preparation"
     mkdir -p data/{train,test} exp
 
-    if [ ! -f ${an4_root}/README ]; then
-        echo Cannot find an4 root! Exiting...
-        exit 1
-    fi
+    #if [ ! -f ${an4_root}/README ]; then
+    #    echo Cannot find an4 root! Exiting...
+    #    exit 1
+    #fi
 
-    python3 local/data_prep.py ${an4_root} sph2pipe
+    python local/data_prep.py ${an4_root} ${KALDI_ROOT}/tools/sph2pipe_v2.5/sph2pipe
 
     for x in test train; do
         for f in text wav.scp utt2spk; do
