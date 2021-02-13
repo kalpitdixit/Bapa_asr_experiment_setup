@@ -113,15 +113,20 @@ if __name__=="__main__":
         raise NotImplementedError
 
     ##### DATASETS #####
-    train_sets = [{"map_file": "/home/ubuntu/data/2019-shri-yogvasishtha-maharamayan/segmented_audios_sph_transcripts_map.json",
-                   "filter_criterias": ["Shibir 1,Pravachan 1", "Shibir 1,Pravachan 3", "Shibir 1,Pravachan 4", "Shibir 1,Pravachan 5"]}]
+    #train_sets = [{"map_file": "/home/ubuntu/data/2019-shri-yogvasishtha-maharamayan/segmented_audios_sph_transcripts_map.json",
+    #               "filter_criterias": ["Shibir 1,Pravachan 1", "Shibir 1,Pravachan 3", "Shibir 1,Pravachan 4", "Shibir 1,Pravachan 5"]}]
 
     #train_sets = [{"map_file": "/home/ubuntu/data/2019-shri-yogvasishtha-maharamayan/segmented_audios_sph_transcripts_map.json",
     #               "filter_criterias": ['Shibir 1,Pravachan 1', 'Shibir 1,Pravachan 3', 'Shibir 1,Pravachan 4', 'Shibir 1,Pravachan 5',
     #                                    'Shibir 2,Pravachan 1', 'Shibir 2,Pravachan 2', 'Shibir 2,Pravachan 3']}]
+                                        #'Shibir 3,Pravachan 1', 'Shibir 3,Pravachan 2', 'Shibir 3,Pravachan 3',
+                                        #'Shibir 4,Pravachan 1', 'Shibir 4,Pravachan 2', 'Shibir 4,Pravachan 3',
+                                        #'Shibir 5,Pravachan 1', 'Shibir 5,Pravachan 2', 'Shibir 5,Pravachan 3', 'Shibir 5,Pravachan 4',
+                                        #'Shibir 6,Pravachan 1', 'Shibir 6,Pravachan 2', 'Shibir 6,Pravachan 3', 'Shibir 6,Pravachan 4',
+                                        #'Shibir 8,Pravachan 1', 'Shibir 8,Pravachan 2', 'Shibir 8,Pravachan 3']}]
 
-    #train_sets = [{"map_file": "/home/ubuntu/data/2019-shri-yogvasishtha-maharamayan/segmented_audios_sph_transcripts_map.json",
-    #               "filter_criterias": ['Shibir 1,Pravachan 1', 'Shibir 1,Pravachan 3', 'Shibir 1,Pravachan 4', 'Shibir 1,Pravachan 5', 'Shibir 10 Granth Poornahuti,Pravachan 1', 'Shibir 10 Granth Poornahuti,Pravachan 2', 'Shibir 10 Granth Poornahuti,Pravachan 3', 'Shibir 10 Granth Poornahuti,Pravachan 4', 'Shibir 2,Pravachan 1', 'Shibir 2,Pravachan 2', 'Shibir 2,Pravachan 3', 'Shibir 3,Pravachan 1', 'Shibir 3,Pravachan 2', 'Shibir 3,Pravachan 3', 'Shibir 4,Pravachan 1', 'Shibir 4,Pravachan 2', 'Shibir 4,Pravachan 3', 'Shibir 5,Pravachan 1', 'Shibir 5,Pravachan 2', 'Shibir 5,Pravachan 3', 'Shibir 5,Pravachan 4', 'Shibir 6,Pravachan 1', 'Shibir 6,Pravachan 2', 'Shibir 6,Pravachan 3', 'Shibir 6,Pravachan 4', 'Shibir 7 Paryushan Mahaparva,Pravachan 1', 'Shibir 7 Paryushan Mahaparva,Pravachan 2', 'Shibir 7 Paryushan Mahaparva,Pravachan 3', 'Shibir 7 Paryushan Mahaparva,Pravachan 4', 'Shibir 7 Paryushan Mahaparva,Pravachan 5', 'Shibir 7 Paryushan Mahaparva,Pravachan 6', 'Shibir 8,Pravachan 1', 'Shibir 8,Pravachan 2', 'Shibir 8,Pravachan 3', 'Shibir 9 Diwali,Pravachan 1', 'Shibir 9 Diwali,Pravachan 2', 'Shibir 9 Diwali,Pravachan 3', 'Shibir 9 Diwali,Pravachan 4', 'Shibir 9 Diwali,Pravachan 5', 'Shibir 9 Diwali,Pravachan 6', 'Shibir 9 Diwali,Pravachan 7']}]
+    train_sets = [{"map_file": "/home/ubuntu/data/2019-shri-yogvasishtha-maharamayan/segmented_audios_sph_transcripts_map.json",
+                   "filter_criterias": ['Shibir 1,Pravachan 1', 'Shibir 1,Pravachan 3', 'Shibir 1,Pravachan 4', 'Shibir 1,Pravachan 5', 'Shibir 10 Granth Poornahuti,Pravachan 1', 'Shibir 10 Granth Poornahuti,Pravachan 2', 'Shibir 10 Granth Poornahuti,Pravachan 3', 'Shibir 10 Granth Poornahuti,Pravachan 4', 'Shibir 2,Pravachan 1', 'Shibir 2,Pravachan 2', 'Shibir 2,Pravachan 3', 'Shibir 3,Pravachan 1', 'Shibir 3,Pravachan 2', 'Shibir 3,Pravachan 3', 'Shibir 4,Pravachan 1', 'Shibir 4,Pravachan 2', 'Shibir 4,Pravachan 3', 'Shibir 5,Pravachan 1', 'Shibir 5,Pravachan 2', 'Shibir 5,Pravachan 3', 'Shibir 5,Pravachan 4', 'Shibir 6,Pravachan 1', 'Shibir 6,Pravachan 2', 'Shibir 6,Pravachan 3', 'Shibir 6,Pravachan 4', 'Shibir 7 Paryushan Mahaparva,Pravachan 1', 'Shibir 7 Paryushan Mahaparva,Pravachan 2', 'Shibir 7 Paryushan Mahaparva,Pravachan 3', 'Shibir 7 Paryushan Mahaparva,Pravachan 4', 'Shibir 7 Paryushan Mahaparva,Pravachan 5', 'Shibir 7 Paryushan Mahaparva,Pravachan 6', 'Shibir 8,Pravachan 1', 'Shibir 8,Pravachan 2', 'Shibir 8,Pravachan 3', 'Shibir 9 Diwali,Pravachan 1', 'Shibir 9 Diwali,Pravachan 2', 'Shibir 9 Diwali,Pravachan 3', 'Shibir 9 Diwali,Pravachan 4', 'Shibir 9 Diwali,Pravachan 5', 'Shibir 9 Diwali,Pravachan 6', 'Shibir 9 Diwali,Pravachan 7']}]
     test_sets  = [{"map_file": "/home/ubuntu/data/2019-shri-yogvasishtha-maharamayan/segmented_audios_sph_transcripts_map.json",
                    "filter_criterias": ["Shibir 1,Pravachan 2"]}]
     
