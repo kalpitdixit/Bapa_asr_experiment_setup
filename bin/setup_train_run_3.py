@@ -52,17 +52,19 @@ def copy_transcript_uids_to_file(corpus, dest_file, allowed_ids, create_text_fil
     corpus: list of entries from .jsonl files. [{"audo_sph_file": ..., "transcript_all_file": ..., "transcript_uid": ..., "filter_criteria": ...}, ...]
     """
 
-    assert len(set([entry["transcript_all_file"] for entry in corpus]))==1
+    #assert len(set([entry["transcript_all_file"] for entry in corpus]))==1, "exepcted 1 got {}".format(len(set([entry["transcript_all_file"] for entry in corpus])))
+    unique_transcript_all_files = list(set([entry["transcript_all_file"] for entry in corpus]))
 
     ### Get Transcript Map
     # key = transcript uid
     # value = transcript line
     # <s> અંબાલાલ ભાઈને ચાર વાર ભલામણ કરી છે ત્રિભોવનભાઇ ને બે વાર ભલામણ કરી છે </s> (b0d740f0-speaker1-00f44130)
     transcript_map = {}
-    with open(corpus[0]["transcript_all_file"], "r") as f:
-        for line in f:
-            key = line.split("</s>")[-1].strip()[1:-1]
-            transcript_map[key] = line
+    for transcript_all_file in unique_transcript_all_files:
+        with open(transcript_all_file, "r") as f:
+            for line in f:
+                key = line.split("</s>")[-1].strip()[1:-1]
+                transcript_map[key] = line
 
     os.system("mkdir -p {}".format(os.path.dirname(dest_file)))
 
@@ -127,6 +129,10 @@ if __name__=="__main__":
 
     train_sets = [{"map_file": "/home/ubuntu/data/2019-shri-yogvasishtha-maharamayan/segmented_audios_sph_transcripts_map.json",
                    "filter_criterias": ['Shibir 1,Pravachan 1', 'Shibir 1,Pravachan 3', 'Shibir 1,Pravachan 4', 'Shibir 1,Pravachan 5', 'Shibir 10 Granth Poornahuti,Pravachan 1', 'Shibir 10 Granth Poornahuti,Pravachan 2', 'Shibir 10 Granth Poornahuti,Pravachan 3', 'Shibir 10 Granth Poornahuti,Pravachan 4', 'Shibir 2,Pravachan 1', 'Shibir 2,Pravachan 2', 'Shibir 2,Pravachan 3', 'Shibir 3,Pravachan 1', 'Shibir 3,Pravachan 2', 'Shibir 3,Pravachan 3', 'Shibir 4,Pravachan 1', 'Shibir 4,Pravachan 2', 'Shibir 4,Pravachan 3', 'Shibir 5,Pravachan 1', 'Shibir 5,Pravachan 2', 'Shibir 5,Pravachan 3', 'Shibir 5,Pravachan 4', 'Shibir 6,Pravachan 1', 'Shibir 6,Pravachan 2', 'Shibir 6,Pravachan 3', 'Shibir 6,Pravachan 4', 'Shibir 7 Paryushan Mahaparva,Pravachan 1', 'Shibir 7 Paryushan Mahaparva,Pravachan 2', 'Shibir 7 Paryushan Mahaparva,Pravachan 3', 'Shibir 7 Paryushan Mahaparva,Pravachan 4', 'Shibir 7 Paryushan Mahaparva,Pravachan 5', 'Shibir 7 Paryushan Mahaparva,Pravachan 6', 'Shibir 8,Pravachan 1', 'Shibir 8,Pravachan 2', 'Shibir 8,Pravachan 3', 'Shibir 9 Diwali,Pravachan 1', 'Shibir 9 Diwali,Pravachan 2', 'Shibir 9 Diwali,Pravachan 3', 'Shibir 9 Diwali,Pravachan 4', 'Shibir 9 Diwali,Pravachan 5', 'Shibir 9 Diwali,Pravachan 6', 'Shibir 9 Diwali,Pravachan 7']}]
+
+    train_sets.append({"map_file": "/home/ubuntu/data/2018-Shri-Adhyatmakalpadrum/segmented_audios_sph_transcripts_map.json",
+                       "filter_criterias": ['audio,Adhikar 14', 'audio,Adhikar 5', 'audio,Adhikar 12', 'audio,Adhikar 8', 'audio,Adhikar 13', 'audio,Adhikar 9', 'audio,Adhikar 10', 'audio,Adhikar 11', 'audio,Adhikar 7', 'audio,Adhikar 3', 'audio,Adhikar 15', 'audio,Adhikar 2', 'audio,Adhikar 4', 'audio,Adhikar 16', 'audio,Adhikar 1', 'audio,1 - Upodghat', 'audio,Adhikar 6']})
+
     test_sets  = [{"map_file": "/home/ubuntu/data/2019-shri-yogvasishtha-maharamayan/segmented_audios_sph_transcripts_map.json",
                    "filter_criterias": ["Shibir 1,Pravachan 2"]}]
     
