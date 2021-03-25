@@ -5,7 +5,7 @@ import sox
 
 
 
-def create_wav_file(mp3_fname, wav_fname):
+def convert_to_wav_file(mp3_fname, wav_fname):
     cmd = "ffmpeg -i {} -ar 48000 {}".format(mp3_fname, wav_fname)
     os.system(cmd)
 
@@ -44,9 +44,9 @@ if __name__=="__main__":
     os.system("mkdir -p {}".format(segments_dname))
 
     ##### SEGMENT #####
-    create_wav_file(mp3_fname, wav_fname)
+    convert_to_wav_file(mp3_fname, wav_fname)
     segment_wav(wav_fname, segments_dname)
     convert_wav_segments_to_mp3(segments_dname)
         
-    ##### CONVERT TO SPH #####
+    ##### CONVERT SEGMENTS: MP3 TO SPH #####
     convert_mp3_to_sph(segments_dname)
