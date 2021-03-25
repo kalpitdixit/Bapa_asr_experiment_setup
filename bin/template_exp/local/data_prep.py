@@ -28,11 +28,12 @@ sph2pipe = sys.argv[2]
 if len(sys.argv) > 3:
     splits = sys.argv[3:]
 else:
-    x = ['train', 'test']
+    splits = ['train', 'test']
 
 sph_dir = {
     'train': 'an4_clstk',
-    'test': 'an4test_clstk'
+    'test': 'an4test_clstk',
+    'inference': 'an4inference_clstk'
 }
 
 for x in splits:
