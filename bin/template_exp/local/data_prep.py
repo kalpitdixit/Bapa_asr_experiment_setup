@@ -20,18 +20,22 @@ import os
 import re
 import sys
 
-if len(sys.argv) != 3:
+if len(sys.argv) < 3:
     print ('Usage: python data_prep.py [an4_root] [sph2pipe]')
     sys.exit(1)
 an4_root = sys.argv[1]
 sph2pipe = sys.argv[2]
+if len(sys.argv) > 3:
+    splits = sys.argv[3:]
+else:
+    x = ['train', 'test']
 
 sph_dir = {
     'train': 'an4_clstk',
     'test': 'an4test_clstk'
 }
 
-for x in ['train', 'test']:
+for x in splits:
     with open(os.path.join(an4_root, 'etc', x + '.transcription'), encoding="utf-8") as transcript_f, \
          open(os.path.join('data', x, 'text'), 'w', encoding="utf-8") as text_f, \
          open(os.path.join('data', x, 'wav.scp'), 'w') as wav_scp_f, \
