@@ -17,7 +17,7 @@ def segment_wav(wav_fname, wav_segment_dname):
 
 def convert_wav_segments_to_mp3(wav_segment_dname):
     for wav_segment_fname in glob.glob(os.path.join(wav_segment_dname, "*wav")):
-        cmd = "ffmpeg -i {} {}".format(wav_segment_fname, wav_segment_fname[:-4:]+".mp3")
+        cmd = "ffmpeg -i {} -ar 44100 {}".format(wav_segment_fname, wav_segment_fname[:-4:]+".mp3")
         os.system(cmd)
         cmd = "rm -f {}".format(wav_segment_fname)
         os.system(cmd)
@@ -33,6 +33,9 @@ def convert_mp3_to_sph(mp3_dname):
 
 
 if __name__=="__main__":
+    """
+    USAGE: python prepare_mp3_file_for_inference.py /path/to/mp3/file 
+    """
     ##### ARGS #####
     mp3_fname = sys.argv[1]
     assert mp3_fname[-4:]==".mp3"    

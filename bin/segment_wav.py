@@ -3,6 +3,7 @@ import collections
 import contextlib
 import sys
 import wave
+import uuid
 
 import webrtcvad
 
@@ -141,7 +142,9 @@ def main(args):
     segments = vad_collector(sample_rate, 30, 300, vad, frames)
     output_path = args[2]
     for i, segment in enumerate(segments):
-        path = os.path.join(output_path, 'chunk-{}.wav'.format(i))
+        utt_id = "{:4s}{:04d}".format(str(uuid.uuid4())[:4], i)
+        path = os.path.join(output_path, '{}-{}-{}.wav'.format(utt_id, "speaker1", utt_id))
+        #path = os.path.join(output_path, 'chunk-{}.wav'.format(i))
         print(' Writing %s' % (path,))
         write_wave(path, segment, sample_rate)
 
