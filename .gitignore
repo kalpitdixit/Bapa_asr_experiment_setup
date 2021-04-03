@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 *swp
+*wav
+*mp3
+*asr_output.jsonl
 
 # C extensions
 *.so
