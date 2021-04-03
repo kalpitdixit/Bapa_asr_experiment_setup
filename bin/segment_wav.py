@@ -87,6 +87,8 @@ def vad_collector(sample_rate, frame_duration_ms,
     triggered = False
 
     voiced_frames = []
+    segment_start_time = None
+    segment_end_time   = None
     for frame in frames:
         is_speech = vad.is_speech(frame.bytes, sample_rate)
 
@@ -100,6 +102,7 @@ def vad_collector(sample_rate, frame_duration_ms,
             if num_voiced > 0.9 * ring_buffer.maxlen:
                 triggered = True
                 sys.stdout.write('+(%s)' % (ring_buffer[0][0].timestamp,))
+                segment_start_time = ring_buffer[0][0].timestamp
                 # We want to yield all the audio we see from now until
                 # we are NOTTRIGGERED, but we have to start with the
                 # audio that's already in the ring buffer.
@@ -117,17 +120,21 @@ def vad_collector(sample_rate, frame_duration_ms,
             # audio we've collected.
             if num_unvoiced > 0.9 * ring_buffer.maxlen:
                 sys.stdout.write('-(%s)' % (frame.timestamp + frame.duration))
+                segment_end_time = frame.timestamp + frame.duration
                 triggered = False
-                yield b''.join([f.bytes for f in voiced_frames])
+                yield b''.join([f.bytes for f in voiced_frames]), segment_start_time, segment_end_time
                 ring_buffer.clear()
                 voiced_frames = []
+                segment_start_time = None
+                segment_end_time   = None
     if triggered:
         sys.stdout.write('-(%s)' % (frame.timestamp + frame.duration))
     sys.stdout.write('\n')
     # If we have any leftover voiced audio when we run out of input,
     # yield it.
     if voiced_frames:
-        yield b''.join([f.bytes for f in voiced_frames])
+        segment_end_time = voiced_frames[-1].timestamp + voiced_frames[-1].duration
+        yield b''.join([f.bytes for f in voiced_frames]), segment_start_time, segment_end_time
 
 
 def main(args):
@@ -141,14 +148,17 @@ def main(args):
     frames = list(frames)
     segments = vad_collector(sample_rate, 30, 300, vad, frames)
     output_path = args[2]
-    for i, segment in enumerate(segments):
-        utt_id = "{:4s}{:04d}".format(str(uuid.uuid4())[:4], i)
-        path = os.path.join(output_path, '{}-{}-{}.wav'.format(utt_id, "speaker1", utt_id))
-        #path = os.path.join(output_path, 'chunk-{}.wav'.format(i))
-        print(' Writing %s' % (path,))
-        write_wave(path, segment, sample_rate)
+    with open(os.path.join(output_path, "timestamps.txt"), "w") as fw:
+        for i, (segment, seg_start_time, seg_end_time) in enumerate(segments):
+            utt_id = "{:08d}".format(i)
+            seg_name = '{}-{}-{}'.format(utt_id, "speaker1", utt_id)
+            path = os.path.join(output_path, '{}.wav'.format(seg_name))
+            #path = os.path.join(output_path, 'chunk-{}.wav'.format(i))
+            print(' Writing %s' % (path,))
+            write_wave(path, segment, sample_rate)
+            fw.write("{} {} {}\n".format(seg_name, seg_start_time, seg_end_time))
 
 
 if __name__ == '__main__':
-    # python segment_mp3.pyy <aggressiveness> <path to wav> <output path>
+    # python segment_mp3.py <aggressiveness> <path to wav> <output path>
     main(sys.argv[1:])
