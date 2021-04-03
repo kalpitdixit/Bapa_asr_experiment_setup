@@ -12,13 +12,25 @@ def argparser():
     return parser.parse_args()
 
 
+def hhmmss_to_ss(strng):
+    a, b, c = [float(x) for x in strng.split(":")]
+    ss = a*3600+b*60+c
+    return ss
+
+
 def read_segment_timestamps_file(fname):
     seg2ts = {}
     with open(fname, "r") as f:
         for line in f:
             line = line.strip().split(" ")
-            seg2ts[line[0].split("-")[0]] = {"start": float(line[1]),
-                                             "end":   float(line[2])}
+            if ":" in line[1]:
+                start = hhmmss_to_ss(line[1])
+                end   = hhmmss_to_ss(line[2])
+            else:
+                start = float(line[1])
+                end   = float(line[2])
+            seg2ts[line[0].split("-")[0]] = {"start": start,
+                                             "end"  : end}
     return seg2ts
 
 
