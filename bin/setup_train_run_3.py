@@ -127,14 +127,26 @@ if __name__=="__main__":
                                         #'Shibir 6,Pravachan 1', 'Shibir 6,Pravachan 2', 'Shibir 6,Pravachan 3', 'Shibir 6,Pravachan 4',
                                         #'Shibir 8,Pravachan 1', 'Shibir 8,Pravachan 2', 'Shibir 8,Pravachan 3']}]
 
+    train_sets = []
+    """
+    ##### 2019 Yogvasishta
     train_sets = [{"map_file": "/home/ubuntu/data/2019-shri-yogvasishtha-maharamayan/segmented_audios_sph_transcripts_map.json",
                    "filter_criterias": ['Shibir 1,Pravachan 1', 'Shibir 1,Pravachan 3', 'Shibir 1,Pravachan 4', 'Shibir 1,Pravachan 5', 'Shibir 10 Granth Poornahuti,Pravachan 1', 'Shibir 10 Granth Poornahuti,Pravachan 2', 'Shibir 10 Granth Poornahuti,Pravachan 3', 'Shibir 10 Granth Poornahuti,Pravachan 4', 'Shibir 2,Pravachan 1', 'Shibir 2,Pravachan 2', 'Shibir 2,Pravachan 3', 'Shibir 3,Pravachan 1', 'Shibir 3,Pravachan 2', 'Shibir 3,Pravachan 3', 'Shibir 4,Pravachan 1', 'Shibir 4,Pravachan 2', 'Shibir 4,Pravachan 3', 'Shibir 5,Pravachan 1', 'Shibir 5,Pravachan 2', 'Shibir 5,Pravachan 3', 'Shibir 5,Pravachan 4', 'Shibir 6,Pravachan 1', 'Shibir 6,Pravachan 2', 'Shibir 6,Pravachan 3', 'Shibir 6,Pravachan 4', 'Shibir 7 Paryushan Mahaparva,Pravachan 1', 'Shibir 7 Paryushan Mahaparva,Pravachan 2', 'Shibir 7 Paryushan Mahaparva,Pravachan 3', 'Shibir 7 Paryushan Mahaparva,Pravachan 4', 'Shibir 7 Paryushan Mahaparva,Pravachan 5', 'Shibir 7 Paryushan Mahaparva,Pravachan 6', 'Shibir 8,Pravachan 1', 'Shibir 8,Pravachan 2', 'Shibir 8,Pravachan 3', 'Shibir 9 Diwali,Pravachan 1', 'Shibir 9 Diwali,Pravachan 2', 'Shibir 9 Diwali,Pravachan 3', 'Shibir 9 Diwali,Pravachan 4', 'Shibir 9 Diwali,Pravachan 5', 'Shibir 9 Diwali,Pravachan 6', 'Shibir 9 Diwali,Pravachan 7']}]
 
+    ##### 2018 Adhyatmakalpadhrum
     train_sets.append({"map_file": "/home/ubuntu/data/2018-Shri-Adhyatmakalpadrum/segmented_audios_sph_transcripts_map.json",
                        "filter_criterias": ['audio,Adhikar 14', 'audio,Adhikar 5', 'audio,Adhikar 12', 'audio,Adhikar 8', 'audio,Adhikar 13', 'audio,Adhikar 9', 'audio,Adhikar 10', 'audio,Adhikar 11', 'audio,Adhikar 7', 'audio,Adhikar 3', 'audio,Adhikar 15', 'audio,Adhikar 2', 'audio,Adhikar 4', 'audio,Adhikar 16', 'audio,Adhikar 1', 'audio,1 - Upodghat', 'audio,Adhikar 6']})
+    """
 
+    ##### 2020 125 Gathanu Stavan
+    train_sets.append({"map_file": "/home/ubuntu/data/2020-Shri-Simandharswamine-Vinantiroop-125-Gathanu-Stavan/segmented_audios_sph_transcripts_map.json",
+                       "filter_criterias": ['', 'Shibir 3,Pravachan 2', 'Shibir 3,Pravachan 1', 'Shibir 2,Pravachan 2', 'Audios,Shibir 4', 'Shibir 3,Pravachan 4', 'Shibir 2,Pravachan 3', 'Shibir 3,Pravachan 3', 'Shibir 2,Pravachan 1', 'Audios,Shibir 5', 'Shibir 1,Pravachan 4', 'Audios,Shibir 6', 'Audios,Shibir 8', 'Audios,Shibir 7']})
+
+    ##### TEST
     test_sets  = [{"map_file": "/home/ubuntu/data/2019-shri-yogvasishtha-maharamayan/segmented_audios_sph_transcripts_map.json",
                    "filter_criterias": ["Shibir 1,Pravachan 2"]}]
+    test_sets.append({"map_file": "/home/ubuntu/data/2020-Shri-Simandharswamine-Vinantiroop-125-Gathanu-Stavan/segmented_audios_sph_transcripts_map.json",
+                      "filter_criterias": ["Shibir 1,Pravachan 2", "Shibir 1,Pravachan 1", "Shibir 1,Pravachan 3"]})
     
     train_corpus = get_corpus_from_sets(train_sets) # list of entries from .jsonl files. [{"audo_sph_file": ..., "transcript_all_file": ...,
                                                     #                                      "transcript_uid": ..., "filter_criteria": ...}, ...]
