@@ -6,55 +6,30 @@ import tempfile
 from hyperpyyaml import load_hyperpyyaml
 from speechbrain.tokenizers.SentencePiece import SentencePiece
 
-from utils import get_utterance_manifest_from_data_config
+from utils import load_hparams, get_utterance_manifest_from_datasets, write_hyperpyyaml_file
 
-
-
-def create_transcripts_json(corpus):
-    """
-    INPUT:
-    corpus: list of entries from .jsonl files. [{"audo_sph_file": ..., "transcript_all_file": ..., "transcript_uid": ..., "filter_criteria": ...}, ...]
-    """
-
-    unique_transcript_all_files = list(set([entry["transcript_all_file"] for entry in corpus]))
-
-    ### Get Transcript Map for all entries in Transcript-All Files
-    # key = transcript uid
-    # value = transcript line
-    # <s> અંબાલાલ ભાઈને ચાર વાર ભલામણ કરી છે ત્રિભોવનભાઇ ને બે વાર ભલામણ કરી છે </s> (b0d740f0-speaker1-00f44130)
-    transcript_map = {}
-    for transcript_all_file in unique_transcript_all_files:
-        with open(transcript_all_file, "r") as f:
-            for line in f:
-                utt_id = line.split("</s>")[-1].strip()[1:-1]
-                transcript = line.split("<s>")[-1].split("</s>")[0].strip()
-                transcript_map[utt_id] = transcript
-
-    ### Get Transcripts for selected entries in Transcript-All Files (i.e. the corpus)
-    selected_transcripts_json = {}
-    annotation_read = "transcript"
-    for entry in corpus:
-        key = entry["transcript_uid"]
-        assert key in transcript_map
-        selected_transcripts_json[key] = {annotation_read: transcript_map[key]}
-    
-    return selected_transcripts_json, annotation_read
 
 
 def main(config):
     ### get Train Data ###
     # list of {'audio_sph_file': str, 'transcript_all_file': str, 'transcript_uid': str, 'filter_criteria': str}
-    # meaning that <audio_sph_file>'s transcript is the onoe in the <transcript_all_file> with id <transcript_uid>
-    train_corpus = get_utterance_manifest_from_data_config(config.train_data_config)
-    for x in train_corpus:
-        assert os.path.exists(x["transcript_all_file"]), "data transcript file {} does not exist! Exiting!".format(x["transcript_all_file"])
+    # meaning that <audio_sph_file>'s transcript is the one in the <transcript_all_file> with id <transcript_uid>
+    hparams = load_hparams(config.train_data_config)
+    train_corpus = get_utterance_manifest_from_datasets(hparams["datasets"])
     
     ### create json file for SpeechBrain-->SentencePiece ###
-    selected_transcripts_json, annotation_read = create_transcripts_json(train_corpus)
+    annotation_read = "transcript" # key-name for each `entry` in `train_corpus` having the transcript as its value
+
+    ### write config file
+    write_hyperpyyaml_file(os.path.join(config.output_folder, "sp_vocab_{}_{}.yaml".format(config.vocab_size, config.model_type)),
+                           {"model_dir": config.output_folder,
+                            "vocab_size": config.vocab_size,
+                            "model_type": config.model_type})
+
 
     ### train custom SentencePiece Tokenizer ###
     with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as f:
-        f.write(json.dumps(selected_transcripts_json))
+        f.write(json.dumps(dict([(entry["transcript_uid"], {annotation_read: entry["transcript"]}) for entry in train_corpus])))
         f.seek(0) 
 
         SentencePiece(model_dir                = config.output_folder,
@@ -62,6 +37,10 @@ def main(config):
                       annotation_train         = f.name,
                       annotation_read          = annotation_read,
                       annotation_format        = "json",
+                      unk_id                   = 0,
+                      bos_id                   = 1,
+                      eos_id                   = 2,
+                      pad_id                   = 3,
                       model_type               = config.model_type,
                       character_coverage       = config.character_coverage,
                       annotation_list_to_check = config.annotation_list_to_check)
@@ -72,7 +51,6 @@ def argparser():
 
     ## DATA ##
     parser.add_argument("--train_data_config", type=str, required=True)
-    
 
     ## TOKENIZER ##
     parser.add_argument("--output_folder", type=str, required=True)
