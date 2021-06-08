@@ -1,0 +1,136 @@
+# Seed needs to be set at top of yaml, before objects with parameters are made
+seed: 8886
+__set_seed: !apply:torch.manual_seed [!ref <seed>]
+output_folder: !ref results/transformer/<seed>
+wer_file: !ref <output_folder>/wer.txt
+save_folder: !ref <output_folder>/save
+train_log: !ref <output_folder>/train_log.txt
+
+####################### Training parameters ###########################
+# To make Transformers converge, the global bath size should be large enough.
+# The global batch size is computed as batch_size * n_gpus * gradient_accumulation.
+# Empirically, we found that this value should be >= 128.
+# Please, set your parameters accordingly.
+number_of_epochs: 110
+batch_size: 16 # This works for 2x GPUs with 32GB
+ctc_weight: 0.3
+gradient_accumulation: 4
+gradient_clipping: 5.0
+loss_reduction: 'batchmean'
+sorting: random
+
+# stages related parameters
+stage_one_epochs: 90
+lr_adam: 1.0
+lr_sgd: 0.000025
+
+# Feature parameters
+sample_rate: 16000
+n_fft: 400
+n_mels: 80
+
+# Dataloader options
+train_dataloader_opts:
+    batch_size: !ref <batch_size>
+    shuffle: True
+
+valid_dataloader_opts:
+    batch_size: 1
+
+test_dataloader_opts:
+    batch_size: 1
+
+####################### Model parameters ###########################
+# Transformer
+d_model: 768
+nhead: 8
+num_encoder_layers: 12
+num_decoder_layers: 6
+d_ffn: 3072
+transformer_dropout: 0.0
+activation: !name:torch.nn.GELU
+output_neurons: 5000
+vocab_size: 5000
+
+# Outputs
+blank_index: 0
+label_smoothing: 0.1
+unk_index: 0
+bos_index: 1
+eos_index: 2
+pad_index: 3
+
+# Decoding parameters
+min_decode_ratio: 0.0
+max_decode_ratio: 1.0
+valid_search_interval: 10
+valid_beam_size: 10
+test_beam_size: 66
+lm_weight: 0.60
+ctc_weight_decode: 0.40
+
+############################## models ################################
+CNN: !new:speechbrain.lobes.models.convolution.ConvolutionFrontEnd
+    input_shape: (8, 10, 80)
+    num_blocks: 3
+    num_layers_per_block: 1
+    out_channels: (128, 256, 512)
+    kernel_sizes: (3, 3, 1)
+    strides: (2, 2, 1)
+    residuals: (False, False, False)
+
+Transformer: !new:speechbrain.lobes.models.transformer.TransformerASR.TransformerASR # yamllint disable-line rule:line-length
+    input_size: 10240
+    tgt_vocab: !ref <output_neurons>
+    d_model: !ref <d_model>
+    nhead: !ref <nhead>
+    num_encoder_layers: !ref <num_encoder_layers>
+    num_decoder_layers: !ref <num_decoder_layers>
+    d_ffn: !ref <d_ffn>
+    dropout: !ref <transformer_dropout>
+    activation: !ref <activation>
+    normalize_before: False
+
+ctc_lin: !new:speechbrain.nnet.linear.Linear
+    input_size: !ref <d_model>
+    n_neurons: !ref <output_neurons>
+
+seq_lin: !new:speechbrain.nnet.linear.Linear
+    input_size: !ref <d_model>
+    n_neurons: !ref <output_neurons>
+
+modules:
+    CNN: !ref <CNN>
+    Transformer: !ref <Transformer>
+    seq_lin: !ref <seq_lin>
+    ctc_lin: !ref <ctc_lin>
+
+model: !new:torch.nn.ModuleList
+    - [!ref <CNN>, !ref <Transformer>, !ref <seq_lin>, !ref <ctc_lin>]
+
+# define two optimizers here for two-stage training
+Adam: !name:torch.optim.Adam
+    lr: 0
+    betas: (0.9, 0.98)
+    eps: 0.000000001
+
+noam_annealing: !new:speechbrain.nnet.schedulers.NoamScheduler
+    lr_initial: !ref <lr_adam>
+    n_warmup_steps: 25000
+    model_size: !ref <d_model>
+
+checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
+    checkpoints_dir: !ref <save_folder>
+    recoverables:
+        model: !ref <model>
+        noam_scheduler: !ref <noam_annealing>
+        normalizer: !ref <normalize>
+        counter: !ref <epoch_counter>
+
+epoch_counter: !new:speechbrain.utils.epoch_loop.EpochCounter
+    limit: !ref <number_of_epochs>
+
+normalize: !new:speechbrain.processing.features.InputNormalization
+    norm_type: global
+    update_until_epoch: 4
+
