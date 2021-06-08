@@ -4,9 +4,10 @@ import argparse
 import tempfile
 from collections import OrderedDict, Counter
 from hyperpyyaml import load_hyperpyyaml, dump_hyperpyyaml
+import torch
 
 import speechbrain as sb
-from speechbrain.tokenizers.SentencePiece import SentencePiece
+import sentencepiece as sp
 
 from utils import get_utterance_manifest_from_datasets, load_hparams, write_hyperpyyaml_file, combine_multiple_hyperpyyaml_files_into_one
 from asr import ASR
@@ -59,9 +60,8 @@ def dataio_prepare(hparams):
 
     datasets = [train_data, valid_data] + [test_data]
 
-    tokenizer = SentencePiece(model_dir  = hparams["tokenizer_config"]["model_dir"],
-                              vocab_size = hparams["tokenizer_config"]["vocab_size"],
-                              model_type = hparams["tokenizer_config"]["model_type"])
+    tokenizer = sp.SentencePieceProcessor()
+    tokenizer.load(hparams["tokenizer_config"]["sp_model_file"])
 
     # 2. Define audio pipeline:
     @sb.utils.data_pipeline.takes("audio_wav_file")
@@ -74,20 +74,17 @@ def dataio_prepare(hparams):
 
 
     # 3. Define text pipeline:
-    @sb.utils.data_pipeline.takes("wrd")
+    @sb.utils.data_pipeline.takes("transcript")
     @sb.utils.data_pipeline.provides(
-        "target_words", "tokens_list", "tokens_bos", "tokens_eos", "tokens"
-        #"wrd", "tokens_list", "tokens_bos", "tokens_eos", "tokens"
+        "transcript", "tokens_list", "tokens_bos", "tokens_eos", "tokens"
     )
-    def text_pipeline(wrd):
-        #yield wrd
-        target_words = wrd.split(" ")
-        yield target_words
-        tokens_list = tokenizer.encode_as_ids(wrd)
+    def text_pipeline(transcript):
+        yield transcript
+        tokens_list = tokenizer.encode_as_ids(transcript)
         yield tokens_list
-        tokens_bos = torch.LongTensor([hparams["bos_index"]] + (tokens_list))
+        tokens_bos = torch.LongTensor([hparams["tokenizer_config"]["bos_index"]] + (tokens_list))
         yield tokens_bos
-        tokens_eos = torch.LongTensor(tokens_list + [hparams["eos_index"]])
+        tokens_eos = torch.LongTensor(tokens_list + [hparams["tokenizer_config"]["eos_index"]])
         yield tokens_eos
         tokens = torch.LongTensor(tokens_list)
         yield tokens
@@ -96,8 +93,7 @@ def dataio_prepare(hparams):
 
     # 4. Set output:
     sb.dataio.dataset.set_output_keys(
-        #datasets, ["id", "sig", "wrd", "tokens_bos", "tokens_eos", "tokens"],
-        datasets, ["id", "sig", "target_words", "tokens_bos", "tokens_eos", "tokens"],
+        datasets, ["id", "sig", "transcript", "tokens_bos", "tokens_eos", "tokens"],
     )
 
     return train_data, valid_data, test_data, tokenizer

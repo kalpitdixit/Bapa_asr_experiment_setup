@@ -98,8 +98,7 @@ class ASR(sb.core.Brain):
                 predicted_words = [
                     tokenizer.decode_ids(utt_seq).split(" ") for utt_seq in hyps
                 ]
-                #target_words = [wrd.split(" ") for wrd in batch.wrd]
-                target_words = batch.target_words
+                target_words = [transcript.split(" ") for transcript in batch.transcript]
                 self.wer_metric.append(ids, predicted_words, target_words)
 
             # compute the accuracy of the one-step-forward prediction

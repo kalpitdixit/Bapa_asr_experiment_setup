@@ -61,6 +61,7 @@ def get_utterance_manifest_from_datasets(datasets):
         root_dir = os.path.dirname(ds["map_file"])
         for entry in entries:
             entry["transcript_all_file"] = os.path.join(root_dir, entry["transcript_all_file"])
+            entry["audio_wav_file"]      = os.path.join(root_dir, entry["audio_wav_file"])
             corpus.append(entry)
 
     ### Get list of transcript_all files and assert that they exist
