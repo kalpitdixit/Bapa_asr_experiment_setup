@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 *swo
 *swp
+*swn
 *wav
 *mp3
 *asr_output.jsonl
