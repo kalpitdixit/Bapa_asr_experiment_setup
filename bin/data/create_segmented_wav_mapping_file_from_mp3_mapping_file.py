@@ -5,6 +5,7 @@ import re
 import docx
 import uuid
 import json
+import multiprocessing as mp
 
 from utils import read_jsonl_file, empty_dir, convert_to_seconds, get_hash
 
@@ -45,21 +46,37 @@ def get_transcript_segments(fname):
     return transcript_segments
 
 
-def write_segmented_wavs_and_transcripts(data_dir, inp_sph_fname, transcript_segments, out_wav_dname, out_transcript_dname, entryi, sox_tfm):
-    out_transcript_fname    = os.path.join(out_transcript_dname, "all.transcriptions")
-    out_segmented_map_fname = os.path.join(data_dir, "segmented_audios_wav_transcripts_map.json")
+def execute_cmd(cmd):
+    os.system(cmd)
+
+
+def multiprocess_jobs(cmds):
+    with mp.Pool(mp.cpu_count()) as p:
+        p.map(execute_cmd, cmds)
+
+
+def write_segmented_wavs_and_transcripts(data_dir, inp_mp3_fname, transcript_segments, out_wav_dname, out_transcript_fname,
+                                         out_segmented_map_fname, entry, sox_tfm):
+    ffmpeg_jobs = []
+    for i,seg in enumerate(transcript_segments):
+        stime, etime, transcript, uid = seg[:]
+
+        ## WAV
+        out_wav_fname = os.path.join(out_wav_dname, "{}.wav".format(uid))
+
+        ## FFMPEG
+        ffmpeg_cmd = "ffmpeg -i '{}' -ss {} -to {} '{}'".format(inp_mp3_fname, stime, etime, out_wav_fname)
+        ffmpeg_jobs.append(ffmpeg_cmd)
+    multiprocess_jobs(ffmpeg_jobs)
+
 
     with open(out_transcript_fname, "a") as fw, open(out_segmented_map_fname, "a") as fw_map:
         for i,seg in enumerate(transcript_segments):
+            # creation of segmented wav file already done above in multiprocessed manner
             stime, etime, transcript, uid = seg[:]
 
             ## WAV
             out_wav_fname = os.path.join(out_wav_dname, "{}.wav".format(uid))
-            sox_tfm.trim(stime, etime).build_file(inp_sph_fname, out_wav_fname)
-            print(uid, stime, etime, inp_sph_fname, out_wav_fname)
-            if i >= 10:
-                exit()
-            continue
 
             ### Transcript
             out_str = "<s> {} </s> ({})".format(transcript, uid)
@@ -75,19 +92,19 @@ def write_segmented_wavs_and_transcripts(data_dir, inp_sph_fname, transcript_seg
 
 def argparser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--audios_sph_to_transcript_fname", type=str, default=None)
+    parser.add_argument("--audios_mp3_mapping_fname", type=str, default=None, required=True)
     return parser.parse_args()
 
 
 
 if __name__=="__main__":
     """
-    a script which uses existing audios_SPH_to_transcript files and creates SEGMENTED_audios_WAV_to_transcript files
+    a script which uses existing audios_MP3_to_transcript files and creates SEGMENTED_audios_WAV_to_transcript files
                                                 and creates the wav files themselves
                                                 and creates it all in a segmented manner as per the transcript files
     
     USAGE:
-        python create_wav_and_transcript_segments.py --audios_sph_to_transcript_fname /path/to/
+        python create_segmented_wav_mapping_file_from_mp3_mapping_file.py --audios_mp3_to_transcript_fname /path/to/
 
     OUTPUT:
          
@@ -95,10 +112,8 @@ if __name__=="__main__":
     ##### ARGUMENTS #####
     config = argparser()
 
-    assert config.audios_sph_to_transcript_fname is not None
-
-    data_dir = os.path.dirname(config.audios_sph_to_transcript_fname)
-    audios_sph_to_transcript_map = read_jsonl_file(config.audios_sph_to_transcript_fname)
+    data_dir = os.path.dirname(config.audios_mp3_mapping_fname)
+    audios_mp3_to_transcript_map = read_jsonl_file(config.audios_mp3_mapping_fname)
 
     out_wav_dname        = os.path.join(data_dir, "segmented-audio-wav")
     out_transcript_dname = os.path.join(data_dir, "segmented-transcripts")
@@ -112,12 +127,18 @@ if __name__=="__main__":
     sox_tfm = sox.Transformer()
 
     ##### RUN #####
-    for entry in audios_sph_to_transcript_map:
-        inp_sph_fname        = os.path.join(data_dir, entry["audio_sph_file"])
+    out_transcript_fname    = os.path.join(out_transcript_dname, "all.transcriptions")
+    out_segmented_map_fname = os.path.join(data_dir, "segmented_audios_wav_transcripts_map.json")
+
+    os.remove(out_segmented_map_fname)
+
+    for entry in audios_mp3_to_transcript_map:
+        inp_mp3_fname        = os.path.join(data_dir, entry["audio_mp3_file"])
         inp_transcript_fname = os.path.join(data_dir, entry["transcript_file"])
         filter_criteria      = entry["filter_criteria"]
 
         ###
         transcript_segments = get_transcript_segments(inp_transcript_fname) # list. each elem is (start_time, end_time, text). times are in seconds.
-        write_segmented_wavs_and_transcripts(data_dir, inp_sph_fname, transcript_segments, out_wav_dname, out_transcript_dname, entry, sox_tfm)
+        write_segmented_wavs_and_transcripts(data_dir, inp_mp3_fname, transcript_segments, out_wav_dname, out_transcript_fname,
+                                             out_segmented_map_fname, entry, sox_tfm)
 

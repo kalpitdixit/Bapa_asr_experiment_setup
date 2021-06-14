@@ -1,14 +1,11 @@
 import os
 import argparse
-import sox
-import re
 import docx
 import uuid
 import json
 
-from utils import read_jsonl_file, empty_dir, convert_to_seconds, get_hash
+from utils import read_jsonl_file, write_jsonl_file, empty_dir, convert_to_seconds, get_hash
 
-punctuations = [".", ",", "!", "?"]
 
 
 
@@ -75,49 +72,66 @@ def write_segmented_wavs_and_transcripts(data_dir, inp_sph_fname, transcript_seg
 
 def argparser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--audios_sph_to_transcript_fname", type=str, default=None)
+    parser.add_argument("--audios_sph_to_transcript_fname", type=str, default=None, required=True)
     return parser.parse_args()
 
 
 
 if __name__=="__main__":
     """
-    a script which uses existing audios_SPH_to_transcript files and creates SEGMENTED_audios_WAV_to_transcript files
-                                                and creates the wav files themselves
-                                                and creates it all in a segmented manner as per the transcript files
+    this script converts an `audios_SPH_to_transcript` file to an `audios_MP3_to_transcript` file
+    no new creation or segmentation of audio files is involved
+    this script checks for the presence of a MP3 file named the same as the corresponding SPH file
+
+    ASSUMES:
+        that the mp3 files will be present in the `audio-mp3` folder from the dir containing the sph mapping file
+        i.e.
+        root
+        |-- audios_sph_to_transcript_map.json
+        |-- audio-sph
+            |-- sph1
+            |-- sph2
+            |-- .
+            |-- .
+        |-- audio-mp3
+            |-- mp31
+            |-- mp32
+            |-- .
+            |-- .
     
     USAGE:
-        python create_wav_and_transcript_segments.py --audios_sph_to_transcript_fname /path/to/
+        python create_mp3_mapping_file_from_sph_mapping_file.py --audios_sph_to_transcript_fname /path/to/
 
     OUTPUT:
-         
+        a `audios_MP3_to_transcript` file
+
     """
     ##### ARGUMENTS #####
+    AUDIOS_MP3_TO_TRANSCRIPT_FNAME = "audios_mp3_to_transcript_fname.json"
+
     config = argparser()
+    audios_mp3_to_transcript_fname = os.path.join(os.path.dirname(config.audios_sph_to_transcript_fname), AUDIOS_MP3_TO_TRANSCRIPT_FNAME)
 
-    assert config.audios_sph_to_transcript_fname is not None
-
+    ##### READ #####
     data_dir = os.path.dirname(config.audios_sph_to_transcript_fname)
     audios_sph_to_transcript_map = read_jsonl_file(config.audios_sph_to_transcript_fname)
-
-    out_wav_dname        = os.path.join(data_dir, "segmented-audio-wav")
-    out_transcript_dname = os.path.join(data_dir, "segmented-transcripts")
-
-    for dname in [out_wav_dname, out_transcript_dname]:
-        empty_dir(dname, allow_data_folder_deletion=True)
-        if not os.path.exists(dname):
-            os.makedirs(dname)
-
-    ##### SOX Transformer  #####
-    sox_tfm = sox.Transformer()
+    audios_mp3_to_transcript_map = []
 
     ##### RUN #####
+    print(len(audios_sph_to_transcript_map))
+    found = 0
     for entry in audios_sph_to_transcript_map:
-        inp_sph_fname        = os.path.join(data_dir, entry["audio_sph_file"])
-        inp_transcript_fname = os.path.join(data_dir, entry["transcript_file"])
-        filter_criteria      = entry["filter_criteria"]
+        audio_sph_file = entry["audio_sph_file"]
+        assert audio_sph_file[-4:]==".sph"
 
-        ###
-        transcript_segments = get_transcript_segments(inp_transcript_fname) # list. each elem is (start_time, end_time, text). times are in seconds.
-        write_segmented_wavs_and_transcripts(data_dir, inp_sph_fname, transcript_segments, out_wav_dname, out_transcript_dname, entry, sox_tfm)
+        audio_mp3_file = os.path.basename(entry["audio_sph_file"])[:-4]+".mp3"
+        audio_mp3_file = os.path.join("audio-mp3", audio_mp3_file)
+        
+        #assert os.path.exists(os.path.join(data_dir, audio_mp3_file))
+        if os.path.exists(os.path.join(data_dir, audio_mp3_file)):
+            del entry["audio_sph_file"]
+            entry["audio_mp3_file"] = audio_mp3_file 
+            audios_mp3_to_transcript_map.append(entry)
 
+    ##### WRITE #####
+    write_jsonl_file(audios_mp3_to_transcript_fname, audios_mp3_to_transcript_map)

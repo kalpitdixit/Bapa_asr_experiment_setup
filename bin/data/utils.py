@@ -34,3 +34,9 @@ def read_jsonl_file(fname):
         return [json.loads(line) for line in f]
 
 
+def write_jsonl_file(fname, lines):
+    with open(fname, "w") as fw:
+        for line in lines:
+            fw.write(json.dumps(line, sort_keys=True)+"\n")
+
+
