@@ -117,7 +117,12 @@ def main(config):
 
 
     # Trainer initialization
-    run_opts = {}
+    run_opts = {"device": "cuda:0"} # certain args from yaml file will autoamtically get picked as run_opts
+                                 # see https://github.com/speechbrain/speechbrain/blob/develop/recipes/LibriSpeech/ASR/transformer/train.py#L372
+                                 # see https://github.com/speechbrain/speechbrain/blob/d6adc40e742107c34ae38dc63484171938b4d237/speechbrain/core.py#L124
+    #print(type(hparams["model_config"]["modules"]))
+    #print(type(hparams))
+    #exit()
     asr_brain = ASR(
         modules=hparams["model_config"]["modules"],
         opt_class=hparams["model_config"]["Adam"],
@@ -179,15 +184,15 @@ def argparser():
     ## TOKENIZER ##
     parser.add_argument("--tokenizer_config", type=str, required=True)
 
-    ## TOKENIZER ##
+    ## TASK MODEL ##
     parser.add_argument("--model_config", type=str, required=True)
 
     ## COMBINED ARGS ##
     # this is a bit abusive, various hyperpyyaml configs are kept separate to prevent combinatorial explosion of yaml files
     # this file will be create during runtime by combining all input config files as a step 1
-    parser.add_argument("--exp_config", type=str, default="tmp.exp_config.yaml", choices=["tmp.exp_config.yaml"])
+    parser.add_argument("--exp_config", type=str, default="tmp.am_exp_config.yaml", choices=["tmp.am_exp_config.yaml"])
     
-    ## TOKENIZER ##
+    ## OUTPUT ##
     parser.add_argument("--output_folder", type=str, required=True)
     return parser.parse_args()
 
