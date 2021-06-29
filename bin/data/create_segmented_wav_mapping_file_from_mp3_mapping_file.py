@@ -1,6 +1,5 @@
 import os
 import argparse
-import sox
 import re
 import docx
 import uuid
@@ -56,7 +55,7 @@ def multiprocess_jobs(cmds):
 
 
 def write_segmented_wavs_and_transcripts(data_dir, inp_mp3_fname, transcript_segments, out_wav_dname, out_transcript_fname,
-                                         out_segmented_map_fname, entry, sox_tfm):
+                                         out_segmented_map_fname, entry):
     ffmpeg_jobs = []
     for i,seg in enumerate(transcript_segments):
         stime, etime, transcript, uid = seg[:]
@@ -123,14 +122,12 @@ if __name__=="__main__":
         if not os.path.exists(dname):
             os.makedirs(dname)
 
-    ##### SOX Transformer  #####
-    sox_tfm = sox.Transformer()
-
     ##### RUN #####
     out_transcript_fname    = os.path.join(out_transcript_dname, "all.transcriptions")
     out_segmented_map_fname = os.path.join(data_dir, "segmented_audios_wav_transcripts_map.json")
 
-    os.remove(out_segmented_map_fname)
+    if os.path.exists(out_segmented_map_fname):
+        os.remove(out_segmented_map_fname)
 
     for entry in audios_mp3_to_transcript_map:
         inp_mp3_fname        = os.path.join(data_dir, entry["audio_mp3_file"])
@@ -140,5 +137,5 @@ if __name__=="__main__":
         ###
         transcript_segments = get_transcript_segments(inp_transcript_fname) # list. each elem is (start_time, end_time, text). times are in seconds.
         write_segmented_wavs_and_transcripts(data_dir, inp_mp3_fname, transcript_segments, out_wav_dname, out_transcript_fname,
-                                             out_segmented_map_fname, entry, sox_tfm)
+                                             out_segmented_map_fname, entry)
 
