@@ -44,8 +44,8 @@ test_dataloader_opts:
 # Transformer
 d_model: 768
 nhead: 8
-num_encoder_layers: 12
-num_decoder_layers: 6
+num_encoder_layers: 4 # 6 # 12
+num_decoder_layers: 2 # 3 # 6
 d_ffn: 3072
 transformer_dropout: 0.0
 activation: !name:torch.nn.GELU
@@ -149,3 +149,10 @@ compute_features: !new:speechbrain.lobes.features.Fbank
     sample_rate: !ref <sample_rate>
     n_fft: !ref <n_fft>
     n_mels: !ref <n_mels>
+
+
+train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
+    save_file: !ref <train_log>
+
+error_rate_computer: !name:speechbrain.utils.metric_stats.ErrorRateStats
+acc_computer: !name:speechbrain.utils.Accuracy.AccuracyStats
