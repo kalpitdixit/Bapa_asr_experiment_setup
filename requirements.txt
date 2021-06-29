@@ -1,0 +1,4 @@
+# Python 3.9.4
+python-docx-0.8.11
+speechbrain==0.5.7
+hyperpyyaml==1.0.0
