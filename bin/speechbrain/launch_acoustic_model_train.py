@@ -7,6 +7,7 @@ from hyperpyyaml import load_hyperpyyaml, dump_hyperpyyaml
 import torch
 
 import speechbrain as sb
+from speechbrain.utils.distributed import run_on_main
 import sentencepiece as sp
 
 from utils import get_utterance_manifest_from_datasets, load_hparams, write_hyperpyyaml_file, combine_multiple_hyperpyyaml_files_into_one
@@ -39,6 +40,7 @@ def dataio_prepare(hparams):
     """
     # train dataset
     train_data = convert_data_config_to_sb_dataset(hparams["train_data_config"])
+    print("len(train_data) : ", len(train_data))
 
     # valid dataset
     valid_data = convert_data_config_to_sb_dataset(hparams["valid_data_config"])
@@ -104,6 +106,17 @@ def main(config):
     # combine all hyperparameters into a single file
     hparams = load_hparams(config.exp_config)
     hparams["model_config"] = load_hparams(config.model_config)
+    #print(hparams)
+    #print(hparams["test_search"])
+    #exit()
+
+    # reset hparams locations to store
+    """
+    hparams["model_config"]["output_folder"] = os.path.join(config.output_folder, f"seed_{hparams['model_config']['seed']}")
+    hparams["model_config"]["wer_file"] = os.path.join(hparams["model_config"]["output_folder"], "wer.txt")
+    hparams["model_config"]["save_folder"] = os.path.join(hparams["model_config"]["output_folder"], "save")
+    hparams["model_config"]["train_log"] = os.path.join(hparams["model_config"]["output_folder"], "train_log.txt")
+    """
 
     # create exp dir
     sb.create_experiment_directory(
@@ -115,14 +128,20 @@ def main(config):
     ### Datasets and Tokenizer ###
     train_data, valid_data, test_data, tokenizer = dataio_prepare(hparams)
 
+    # run_opts
+    run_opts = {"device": "cuda:0"} # certain args from yaml file will autoamtically get picked as run_opts
+                                    # see https://github.com/speechbrain/speechbrain/blob/develop/recipes/LibriSpeech/ASR/transformer/train.py#L372
+                                    # see https://github.com/speechbrain/speechbrain/blob/d6adc40e742107c34ae38dc63484171938b4d237/speechbrain/core.py#L124
+
+    # load lm model
+    #run_on_main(hparams["model_config"]["pretrainer"].collect_files)
+    #hparams["model_config"]["pretrainer"].load_collected(device=run_opts["device"])
+    #hparams["pretrainer"].load_collected(device=run_opts["device"])
 
     # Trainer initialization
-    run_opts = {"device": "cuda:0"} # certain args from yaml file will autoamtically get picked as run_opts
-                                 # see https://github.com/speechbrain/speechbrain/blob/develop/recipes/LibriSpeech/ASR/transformer/train.py#L372
-                                 # see https://github.com/speechbrain/speechbrain/blob/d6adc40e742107c34ae38dc63484171938b4d237/speechbrain/core.py#L124
     #print(type(hparams["model_config"]["modules"]))
     #print(type(hparams))
-    #exit()
+    #exit()i
     asr_brain = ASR(
         modules=hparams["model_config"]["modules"],
         opt_class=hparams["model_config"]["Adam"],
@@ -130,47 +149,39 @@ def main(config):
         run_opts=run_opts,
         checkpointer=hparams["model_config"]["checkpointer"],
     )
+    #print(hparams["model_config"]["test_search"])
+    #print(hparams["model_config"]["test_search"].lm_modules)
+    #hparams["model_config"]["test_search"].lm_modules.load("results/Transformer/2223/save/CKPT+2022-05-14+22-46-15+00/")
+    #hparams["model_config"]["test_search"].load(hparams["tokenizer_config"]["sp_model_file"])
 
     # adding objects to trainer:
     asr_brain.tokenizer = tokenizer # hparams["tokenizer"]
 
     # Training
-    asr_brain.fit(
-        asr_brain.hparams.epoch_counter,
-        train_data,
-        valid_data,
-        train_loader_kwargs=hparams["model_config"]["train_dataloader_opts"],
-        valid_loader_kwargs=hparams["model_config"]["valid_dataloader_opts"],
+    if not config.run_test_only:
+        asr_brain.fit(
+            asr_brain.hparams.epoch_counter,
+            train_data,
+            valid_data,
+            train_loader_kwargs=hparams["model_config"]["train_dataloader_opts"],
+            valid_loader_kwargs=hparams["model_config"]["valid_dataloader_opts"],
+        )
+
+    # Testing
+    #for k in test_datasets.keys():  # keys are test_clean, test_other etc
+    asr_brain.hparams.wer_file = os.path.join(
+        config.output_folder, "wer_{}.txt".format("test")
     )
-
     
+    print("RUNNING TEST ON TOP 20 TRAIN")
+    asr_brain.evaluate(
+        train_data.filtered_sorted(select_n=20),
+        #test_data.filtered_sorted(select_n=2),
+        #test_data,
+        max_key="ACC",
+        test_loader_kwargs=hparams["model_config"]["test_dataloader_opts"],
+    ) 
 
-
-    raise NotImplementedError
-
-    ### get Train Data ###
-    # list of {'audio__file': str, 'transcript_all_file': str, 'transcript_uid': str, 'filter_criteria': str}
-    # meaning that <audio__file>'s transcript is the one in the <transcript_all_file> with id <transcript_uid>
-    train_corpus = get_utterance_manifest_from_data_config(config.train_data_config)
-    for x in train_corpus:
-        assert os.path.exists(x["transcript_all_file"]), "data transcript file {} does not exist! Exiting!".format(x["transcript_all_file"])
-    
-    ### create json file for SpeechBrain-->SentencePiece ###
-    selected_transcripts_json, annotation_read = create_transcripts_json(train_corpus)
-
-    ### train custom SentencePiece Tokenizer ###
-    with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as f:
-        f.write(json.dumps(selected_transcripts_json))
-        f.seek(0) 
-
-        SentencePiece(model_dir                = config.output_folder,
-                      vocab_size               = config.vocab_size,
-                      annotation_train         = f.name,
-                      annotation_read          = annotation_read,
-                      annotation_format        = "json",
-                      model_type               = config.model_type,
-                      character_coverage       = config.character_coverage,
-                      annotation_list_to_check = config.annotation_list_to_check)
 
 
 def argparser():
@@ -194,6 +205,9 @@ def argparser():
     
     ## OUTPUT ##
     parser.add_argument("--output_folder", type=str, required=True)
+
+    ## CONTROL ##
+    parser.add_argument("--run_test_only", action="store_true", help="only run test; typically used by models that are already trained previously")
     return parser.parse_args()
 
 
@@ -212,5 +226,5 @@ if __name__=="__main__":
                                                                            "test_data_config" : config.test_data_config,
                                                                            "tokenizer_config" : config.tokenizer_config},
                                                 output_hyperpyyaml_file = config.exp_config)
-    ##### #####
+    ##### MAIN #####
     main(config)

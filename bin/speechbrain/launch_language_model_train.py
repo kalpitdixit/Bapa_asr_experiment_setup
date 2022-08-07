@@ -5,10 +5,13 @@ import logging
 import glob
 import torch
 #from datasets import load_dataset
+import tempfile
+import json
 from hyperpyyaml import load_hyperpyyaml
 
 import speechbrain as sb
 from speechbrain.utils.distributed import run_on_main
+import sentencepiece as sp
 
 from utils import get_utterance_manifest_from_datasets, load_hparams, write_hyperpyyaml_file, combine_multiple_hyperpyyaml_files_into_one
 
@@ -89,6 +92,26 @@ class LM(sb.core.Brain):
                 meta=stage_stats, min_keys=["loss"],
             )
 
+
+def convert_data_config_to_sb_dataset(data_config):
+    """
+        data_config: from yaml file, supporting key "datasets" with value: list of {"map_file": str, "filter_criterias": list of str}
+        1. data_config --> corpus. list of {'audio__file': str, 'transcript_all_file': str, 'transcript_uid': str, 'filter_criteria': str}
+        2. corpus --> json format of the same for SpeechBrain
+        3. json format of the same for SpeechBrain --> write to tmp file
+        4. tmp file --> DynamicItemDataset.from_json
+    """
+    corpus = get_utterance_manifest_from_datasets(data_config["datasets"])
+    # convert corpus into a single json object
+    corpus_json = dict([(line["transcript_uid"].split("-")[2], line) for line in corpus])
+    with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as f:
+        f.write(json.dumps(corpus_json))
+        f.seek(0)
+
+        data = sb.dataio.dataset.DynamicItemDataset.from_json(json_path=f.name)
+    return data
+
+
 # Define custom data procedure
 def dataio_prepare(hparams):
     """
@@ -154,7 +177,9 @@ def dataio_prepare(hparams):
     )
 
     return train_data, valid_data, test_data, tokenizer
-def dataio_prepare(hparams):
+
+
+def orig_dataio_prepare(hparams):
     """grap all the .txt files for transcripts"""
     logging.info("generating datasets...")
     data_folder = hparams["data_folder"]
@@ -227,6 +252,12 @@ def main(config):
     hparams = load_hparams(config.exp_config)
     hparams["model_config"] = load_hparams(config.model_config)
 
+    # reset hparams locations to store
+    hparams["model_config"]["output_folder"] = os.path.join(config.output_folder, f"seed_{hparams['model_config']['seed']}")
+    #hparams["model_config"]["wer_file"] = os.path.join(hparams["model_config"]["output_folder"], "wer.txt")
+    hparams["model_config"]["save_folder"] = os.path.join(hparams["model_config"]["output_folder"], "save")
+    hparams["model_config"]["train_log"] = os.path.join(hparams["model_config"]["output_folder"], "train_log.txt")
+
     # Create experiment directory
     sb.create_experiment_directory(
         experiment_directory=config.output_folder,
@@ -235,7 +266,7 @@ def main(config):
     )
 
     ### Datasets and Tokenizer ###
-    train_data, valid_data, test_data = dataio_prepare(hparams)
+    train_data, valid_data, test_data, tokenizer = dataio_prepare(hparams)
 
     # Trainer initialization
     run_opts = {"device": "cuda:0"} # certain args from yaml file will autoamtically get picked as run_opts

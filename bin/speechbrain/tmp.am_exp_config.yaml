@@ -1,0 +1,24 @@
+train_data_config:
+  datasets:
+  - map_file: /home/ubuntu/data/2019-shri-yogvasishtha-maharamayan/segmented_audios_wav_transcripts_map.json
+    filter_criterias:
+    - Shibir 1,Pravachan 1
+valid_data_config:
+  datasets:
+  - map_file: /home/ubuntu/data/2019-shri-yogvasishtha-maharamayan/segmented_audios_wav_transcripts_map.json
+    filter_criterias:
+    - Shibir 1,Pravachan 2
+test_data_config:
+  datasets:
+  - map_file: /home/ubuntu/data/2019-shri-yogvasishtha-maharamayan/segmented_audios_wav_transcripts_map.json
+    filter_criterias:
+    - Shibir 1,Pravachan 3
+tokenizer_config:
+  model_dir: tmp_tokenizer
+  vocab_size: 500
+  model_type: bpe
+  sp_model_file: tmp_tokenizer/500_bpe.model
+  unk_index: 0
+  bos_index: 1
+  eos_index: 2
+  pad_index: 3

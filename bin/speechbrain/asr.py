@@ -96,7 +96,7 @@ class ASR(sb.core.Brain):
             ):
                 # Decode token terms to words
                 predicted_words = [
-                    tokenizer.decode_ids(utt_seq).split(" ") for utt_seq in hyps
+                    self.tokenizer.decode_ids(utt_seq).split(" ") for utt_seq in hyps
                 ]
                 target_words = [transcript.split(" ") for transcript in batch.transcript]
                 self.wer_metric.append(ids, predicted_words, target_words)
