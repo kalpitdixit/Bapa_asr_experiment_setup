@@ -1,7 +1,7 @@
 # Seed needs to be set at top of yaml, before objects with parameters are made
-seed: 8886
+seed: !PLACEHOLDER # 8886
 __set_seed: !apply:torch.manual_seed [!ref <seed>]
-output_folder: !ref results/transformer/<seed>
+output_folder: !PLACEHOLDER # !ref results/transformer/<seed>
 wer_file: !ref <output_folder>/wer.txt
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt

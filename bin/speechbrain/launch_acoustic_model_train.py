@@ -2,6 +2,7 @@ import os
 import json
 import argparse
 import tempfile
+import uuid
 from collections import OrderedDict, Counter
 from hyperpyyaml import load_hyperpyyaml, dump_hyperpyyaml
 import torch
@@ -12,6 +13,7 @@ import sentencepiece as sp
 
 from utils import get_utterance_manifest_from_datasets, load_hparams, write_hyperpyyaml_file, combine_multiple_hyperpyyaml_files_into_one
 from asr import ASR
+from constants import RESULTS
 
 
 def convert_data_config_to_sb_dataset(data_config):
@@ -103,11 +105,21 @@ def dataio_prepare(hparams):
  
 def main(config):
     ### create Experiment Directory ###
+    # output folder
+    if config.run_test_only:
+        config.output_folder = config.output_folder # os.path.join(RESULTS, config.output_folder, f"{config.seed}")
+    else:
+        config.output_folder = os.path.join(RESULTS, config.output_folder, f"seed_{config.seed}_{str(uuid.uuid4())[:8]}")
+        print(f"output_folder: {config.output_folder}")
+
     # combine all hyperparameters into a single file
     hparams = load_hparams(config.exp_config)
-    hparams["model_config"] = load_hparams(config.model_config)
-    #print(hparams)
+    hparams["model_config"] = load_hparams(config.model_config, overrides={"seed": config.seed, "output_folder": config.output_folder})
     #print(hparams["test_search"])
+    #exit()
+    #hparams["model_config"]["output_folder"] = "results/transformer/seed_8886"
+    #print(hparams["model_config"]["output_folder"])
+    #print(hparams["model_config"]["wer_file"])
     #exit()
 
     # reset hparams locations to store
@@ -197,6 +209,7 @@ def argparser():
 
     ## TASK MODEL ##
     parser.add_argument("--model_config", type=str, required=True)
+    parser.add_argument("--seed", type=int, default=8886)
 
     ## COMBINED ARGS ##
     # this is a bit abusive, various hyperpyyaml configs are kept separate to prevent combinatorial explosion of yaml files
@@ -204,7 +217,7 @@ def argparser():
     parser.add_argument("--exp_config", type=str, default="tmp.am_exp_config.yaml", choices=["tmp.am_exp_config.yaml"])
     
     ## OUTPUT ##
-    parser.add_argument("--output_folder", type=str, required=True)
+    parser.add_argument("--output_folder", type=str, default="transformer", help="final output_folder is 'results/<output_folder>/seed_<seed>_<uuid>'")
 
     ## CONTROL ##
     parser.add_argument("--run_test_only", action="store_true", help="only run test; typically used by models that are already trained previously")

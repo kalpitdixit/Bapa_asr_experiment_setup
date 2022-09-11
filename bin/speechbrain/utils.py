@@ -15,9 +15,9 @@ def write_jsonl_file(fname, lines):
             fw.write(json.dumps(line, sort_keys=True)+"\n")
 
 
-def load_hparams(hparams_fname):
+def load_hparams(hparams_fname, overrides=None):
     with open(hparams_fname, "r") as f:
-        return load_hyperpyyaml(f)
+        return load_hyperpyyaml(f, overrides=overrides)
 
 
 def combine_multiple_hyperpyyaml_files_into_one(input_hyperpyyaml_files=None, extra_kv={}, output_hyperpyyaml_file=None):
