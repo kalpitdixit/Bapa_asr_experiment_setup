@@ -56,15 +56,15 @@ def get_utterance_manifest_from_datasets(datasets):
     # at this stage, the trancsript info for each utterance is a filename with multiple trancsripts ('transcript_all_file')
     # and an uid into that file, `transcript_uid`
     corpus = []
+    ignored_filter_criterias = set()
     for ds in datasets:
         filter_criterias_counts = OrderedDict([(k, 0) for k in ds["filter_criterias"]])
-        print(filter_criterias_counts)
         entries = []
         for entry in read_jsonl_file(ds["map_file"]):
             if entry["filter_criteria"] in ds["filter_criterias"]:
                 entries.append(entry)
             else:
-                print(entry["filter_criteria"])
+                ignored_filter_criterias.update([entry["filter_criteria"]])
 
         # convert_to_absolute_paths:
         root_dir = os.path.dirname(ds["map_file"])
@@ -78,6 +78,9 @@ def get_utterance_manifest_from_datasets(datasets):
         for k,v in filter_criterias_counts.items():
             print(f"{k}: {v}")
         #exit()
+    print(filter_criterias_counts)
+    print(f"ignored_filter_criterias: {ignored_filter_criterias}")
+    print()
 
     ### Get list of transcript_all files and assert that they exist
     # beginning the effort to directly have the trnascripts in each entry instead of transcript_files and uids

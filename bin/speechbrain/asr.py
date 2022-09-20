@@ -24,9 +24,12 @@ class ASR(sb.core.Brain):
                 tokens_bos = torch.cat([tokens_bos, tokens_bos], dim=0)
 
         # compute features
+        #print(wavs.size())
         feats = self.hparams.compute_features(wavs)
+        #print(feats.size())
         current_epoch = self.hparams.epoch_counter.current
         feats = self.hparams.normalize(feats, wav_lens, epoch=current_epoch)
+        #print(feats.size())
 
         if stage == sb.Stage.TRAIN:
             if hasattr(self.hparams, "augmentation"):
@@ -34,6 +37,9 @@ class ASR(sb.core.Brain):
 
         # forward modules
         src = self.hparams.CNN(feats)
+        #print(src.size())
+        #print("---")
+
         enc_out, pred = self.hparams.Transformer(
             src, tokens_bos, wav_lens, pad_idx=self.hparams.pad_index
         )
@@ -112,6 +118,8 @@ class ASR(sb.core.Brain):
         self.check_and_reset_optimizer()
 
         predictions = self.compute_forward(batch, sb.Stage.TRAIN)
+        if predictions is False:
+            return False
         loss = self.compute_objectives(predictions, batch, sb.Stage.TRAIN)
 
         # normalize the loss by gradient_accumulation step

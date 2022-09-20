@@ -6,6 +6,7 @@ import uuid
 from collections import OrderedDict, Counter
 from hyperpyyaml import load_hyperpyyaml, dump_hyperpyyaml
 import torch
+import numpy as np
 
 import speechbrain as sb
 from speechbrain.utils.distributed import run_on_main
@@ -19,7 +20,7 @@ from constants import RESULTS
 def convert_data_config_to_sb_dataset(data_config):
     """
         data_config: from yaml file, supporting key "datasets" with value: list of {"map_file": str, "filter_criterias": list of str}
-        1. data_config --> corpus. list of {'audio__file': str, 'transcript_all_file': str, 'transcript_uid': str, 'filter_criteria': str}
+        1. data_config --> corpus. list of {'audio_file': str, 'transcript_all_file': str, 'transcript_uid': str, 'filter_criteria': str}
         2. corpus --> json format of the same for SpeechBrain
         3. json format of the same for SpeechBrain --> write to tmp file
         4. tmp file --> DynamicItemDataset.from_json
@@ -101,6 +102,14 @@ def dataio_prepare(hparams):
     )
 
     return train_data, valid_data, test_data, tokenizer
+
+
+def filter_sequences_by_length(data, split_name):
+    full_size = len(data)
+    data = data.filtered_sorted(key_test={"sig": lambda a: 640 * 10 <= list(a.size())[0] <= 640 * 4000})
+    print(f"removing short and long sequences from {split_name.upper()}: dataset size {full_size} --> {len(data)}")
+    print("keeping only signals that meet: 10 <= sig / 640 >= 4000")
+    return data
    
  
 def main(config):
@@ -139,6 +148,17 @@ def main(config):
 
     ### Datasets and Tokenizer ###
     train_data, valid_data, test_data, tokenizer = dataio_prepare(hparams)
+    print(len(train_data))
+    """
+    for x in train_data:
+        print(x)
+        print(x["sig"].size())
+        exit()
+    exit()
+    """
+    train_data = filter_sequences_by_length(train_data, "train")
+    valid_data = filter_sequences_by_length(valid_data, "valid")
+    test_data  = filter_sequences_by_length(test_data,  "test")
 
     # run_opts
     run_opts = {"device": "cuda:0"} # certain args from yaml file will autoamtically get picked as run_opts
@@ -187,9 +207,9 @@ def main(config):
     
     print("RUNNING TEST ON TOP 20 TRAIN")
     asr_brain.evaluate(
-        train_data.filtered_sorted(select_n=20),
+        #train_data.filtered_sorted(select_n=20),
         #test_data.filtered_sorted(select_n=2),
-        #test_data,
+        test_data,
         max_key="ACC",
         test_loader_kwargs=hparams["model_config"]["test_dataloader_opts"],
     ) 
