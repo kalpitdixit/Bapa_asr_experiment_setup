@@ -57,6 +57,7 @@ def multiprocess_jobs(cmds):
 def write_segmented_wavs_and_transcripts(data_dir, inp_mp3_fname, transcript_segments, out_wav_dname, out_transcript_fname,
                                          out_segmented_map_fname, entry):
     ffmpeg_jobs = []
+
     for i,seg in enumerate(transcript_segments):
         stime, etime, transcript, uid = seg[:]
 

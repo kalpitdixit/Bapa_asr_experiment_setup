@@ -45,7 +45,7 @@ def get_transcript_segments(fname):
     return transcript_segments
 
 
-def write_segmented_wavs_and_transcripts(data_dir, inp_sph_fname, transcript_segments, out_wav_dname, out_transcript_dname, entryi, sox_tfm):
+def write_segmented_wavs_and_transcripts(data_dir, inp_sph_fname, transcript_segments, out_wav_dname, out_transcript_dname, entryi, sox_tfm, write_to_disk):
     out_transcript_fname    = os.path.join(out_transcript_dname, "all.transcriptions")
     out_segmented_map_fname = os.path.join(data_dir, "segmented_audios_wav_transcripts_map.json")
 
@@ -55,27 +55,31 @@ def write_segmented_wavs_and_transcripts(data_dir, inp_sph_fname, transcript_seg
 
             ## WAV
             out_wav_fname = os.path.join(out_wav_dname, "{}.wav".format(uid))
-            sox_tfm.trim(stime, etime).build_file(inp_sph_fname, out_wav_fname)
-            print(uid, stime, etime, inp_sph_fname, out_wav_fname)
-            if i >= 10:
-                exit()
-            continue
+            if write_to_disk:
+                sox_tfm.trim(stime, etime).build_file(inp_sph_fname, out_wav_fname)
+            #print(uid, stime, etime, inp_sph_fname, out_wav_fname)
+            #if i >= 10:
+            #    exit()
+            #continue
 
             ### Transcript
             out_str = "<s> {} </s> ({})".format(transcript, uid)
-            fw.write(out_str+"\n")
+            if write_to_disk:
+                fw.write(out_str+"\n")
 
             ## Segmented Map
             segmented_entry = {"audio_wav_file"     : os.path.relpath(out_wav_fname, data_dir),
                                "transcript_all_file": os.path.relpath(out_transcript_fname, data_dir),
                                "transcript_uid"     : uid,
                                "filter_criteria"    : entry["filter_criteria"]}
-            fw_map.write(json.dumps(segmented_entry)+"\n")
+            if write_to_disk:
+                fw_map.write(json.dumps(segmented_entry)+"\n")
 
 
 def argparser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--audios_sph_to_transcript_fname", type=str, default=None)
+    parser.add_argument("--write_to_disk", action="store_true")
     return parser.parse_args()
 
 
@@ -116,8 +120,8 @@ if __name__=="__main__":
         inp_sph_fname        = os.path.join(data_dir, entry["audio_sph_file"])
         inp_transcript_fname = os.path.join(data_dir, entry["transcript_file"])
         filter_criteria      = entry["filter_criteria"]
-
+        print(entry)
         ###
         transcript_segments = get_transcript_segments(inp_transcript_fname) # list. each elem is (start_time, end_time, text). times are in seconds.
-        write_segmented_wavs_and_transcripts(data_dir, inp_sph_fname, transcript_segments, out_wav_dname, out_transcript_dname, entry, sox_tfm)
+        write_segmented_wavs_and_transcripts(data_dir, inp_sph_fname, transcript_segments, out_wav_dname, out_transcript_dname, entry, sox_tfm, config.write_to_disk)
 
