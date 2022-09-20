@@ -1,5 +1,7 @@
 import os
 import json
+from collections import OrderedDict
+
 from hyperpyyaml import load_hyperpyyaml, dump_hyperpyyaml
 
 
@@ -55,14 +57,27 @@ def get_utterance_manifest_from_datasets(datasets):
     # and an uid into that file, `transcript_uid`
     corpus = []
     for ds in datasets:
-        entries = [entry for entry in read_jsonl_file(ds["map_file"]) if entry["filter_criteria"] in ds["filter_criterias"]]
+        filter_criterias_counts = OrderedDict([(k, 0) for k in ds["filter_criterias"]])
+        print(filter_criterias_counts)
+        entries = []
+        for entry in read_jsonl_file(ds["map_file"]):
+            if entry["filter_criteria"] in ds["filter_criterias"]:
+                entries.append(entry)
+            else:
+                print(entry["filter_criteria"])
 
         # convert_to_absolute_paths:
         root_dir = os.path.dirname(ds["map_file"])
         for entry in entries:
+            filter_criterias_counts[entry["filter_criteria"]] += 1
             entry["transcript_all_file"] = os.path.join(root_dir, entry["transcript_all_file"])
             entry["audio_wav_file"]      = os.path.join(root_dir, entry["audio_wav_file"])
             corpus.append(entry)
+
+        ### Print Filter Criterias counts
+        for k,v in filter_criterias_counts.items():
+            print(f"{k}: {v}")
+        #exit()
 
     ### Get list of transcript_all files and assert that they exist
     # beginning the effort to directly have the trnascripts in each entry instead of transcript_files and uids
