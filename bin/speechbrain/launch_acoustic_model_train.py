@@ -43,7 +43,6 @@ def dataio_prepare(hparams):
     """
     # train dataset
     train_data = convert_data_config_to_sb_dataset(hparams["train_data_config"])
-    print("len(train_data) : ", len(train_data))
 
     # valid dataset
     valid_data = convert_data_config_to_sb_dataset(hparams["valid_data_config"])
@@ -108,7 +107,7 @@ def filter_sequences_by_length(data, split_name):
     full_size = len(data)
     data = data.filtered_sorted(key_test={"sig": lambda a: 640 * 10 <= list(a.size())[0] <= 640 * 4000})
     print(f"removing short and long sequences from {split_name.upper()}: dataset size {full_size} --> {len(data)}")
-    print("keeping only signals that meet: 10 <= sig / 640 >= 4000")
+    print("only keeping signals that meet: 10 <= sig / 640 >= 4000")
     return data
    
  
@@ -148,16 +147,10 @@ def main(config):
 
     ### Datasets and Tokenizer ###
     train_data, valid_data, test_data, tokenizer = dataio_prepare(hparams)
-    print(len(train_data))
-    """
-    for x in train_data:
-        print(x)
-        print(x["sig"].size())
-        exit()
-    exit()
-    """
-    train_data = filter_sequences_by_length(train_data, "train")
-    valid_data = filter_sequences_by_length(valid_data, "valid")
+
+    if not config.run_test_only:
+        train_data = filter_sequences_by_length(train_data, "train")
+        valid_data = filter_sequences_by_length(valid_data, "valid")
     test_data  = filter_sequences_by_length(test_data,  "test")
 
     # run_opts
@@ -206,10 +199,12 @@ def main(config):
     )
     
     print("RUNNING TEST ON TOP 20 TRAIN")
+    #print("RUNNING TEST ON TOP 20 TEST")
     asr_brain.evaluate(
-        #train_data.filtered_sorted(select_n=20),
+        train_data.filtered_sorted(select_n=20),
+        #test_data.filtered_sorted(select_n=20),
         #test_data.filtered_sorted(select_n=2),
-        test_data,
+        #test_data,
         max_key="ACC",
         test_loader_kwargs=hparams["model_config"]["test_dataloader_opts"],
     ) 
